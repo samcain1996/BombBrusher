@@ -3,64 +3,63 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
+using System.Security.Cryptography.X509Certificates;
+using System.Runtime.Intrinsics.X86;
 
 namespace BombBrusher
 {
-    internal class Cell : Button
+    internal partial class Cell : Button
     {
-        // Map the number of neighbors with bombs to cell font color
-        public static readonly Dictionary<int, Color> NumberColorMap = new (){
 
-            { 1, Color.Blue },
-            { 2, Color.Green },
-            { 3, Color.Red },
-            { 4, Color.DarkBlue },
-            { 5, Color.IndianRed },
-            { 6, Color.Turquoise },
-            { 7, Color.Olive },
-            { 8, Color.Black }
-        
-        };
+        internal struct ReferenceCell
+        {
+            public readonly Color forecolor = DefaultColor;
+            public readonly Color backcolor = DefaultColor;
+            public readonly Font font = CellFont;
+            public readonly string text = String.Empty;
 
-        // Background colors
-        private static readonly Color RevealedColor = Color.DarkGray;
-        private static readonly Color BombColor = Color.Orange;
+            public ReferenceCell(Color fc, Color bc, Font f, string t)
+            {
+                forecolor = fc;
+                backcolor = bc;
+                font = f;
+                text = t;
+            }
 
-        private static readonly Font CellFont = 
-            new("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            public ReferenceCell(Color fc, Color bc, string t) : this(fc, bc, CellFont, t) { }
+        }
 
-
+        public enum CellType
+        {
+            Bomb,
+            BombGuess,
+            RevealedEmpty,
+            Revealed,
+            Default
+        }
 
         public readonly int row;
         public readonly int col;
         public int neighborsWithBombs;
 
-        public Cell(in int row, in int col, in int size,
-               in EventHandler onClick)
+        public Cell(int row, int col, int size, in EventHandler onClick)
         {
             this.row = row;
             this.col = col;
 
-            this.Location = new Point(row * size, size * col);
-            this.Size = new Size(size, size);
+            this.Location = new(row * size, size * col);
+            this.Size = new(size, size);
+
             this.Click += onClick;
             this.Click += Reveal;
+            this.MouseDown += OnMouseDown;
 
             this.IsBomb = false;
             this.Text = String.Empty;
-            this.neighborsWithBombs = 0;
 
-        }
+            AllCells.Add(this);
 
-        public override bool Equals(object? obj)
-        {
-            // Two cells are equal if they have the same row and col
-            if (obj is not Cell other) { return false; }
-
-            return other.row == row && other.col == col;
         }
 
         public bool IsBomb { get; set; }
@@ -73,20 +72,23 @@ namespace BombBrusher
 
         public void Reveal(object? sender = null, EventArgs? e = null)
         {
-            BackColor = IsBomb ? BombColor : RevealedColor;
-
-            // Format text
-            if (neighborsWithBombs > 0) { 
-                Font = CellFont;
-                ForeColor = NumberColorMap[neighborsWithBombs]; 
-                Text =  IsBomb ? "X" : neighborsWithBombs.ToString(); 
+            Font = CellFont;
+            if (IsBomb) { Type = CellType.Bomb; }
+            else
+            {
+                BackColor = RevealedColor;
+                ForeColor = NumberColorMap[neighborsWithBombs];
+                if (neighborsWithBombs > 0) { Text = neighborsWithBombs.ToString(); }
             }
         }
 
-        public override int GetHashCode()
+        public void MarkAsBomb(int totalBombs)
         {
-            return base.GetHashCode();
+            if (Type == CellType.BombGuess) { Type = CellType.Default; }
+            else if (MarkedBombs < totalBombs) { Type = CellType.BombGuess; }
         }
+
+
     }
 
 }

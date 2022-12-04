@@ -1,35 +1,39 @@
 using System.Collections.Generic;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace BombBrusher
 {
     public partial class GameBoard : Form
     {
+        // Difficulty name and percentage of bombs
         private readonly Dictionary<string, short> Difficulty = new() { 
             { "Easy", 10 }, { "Medium", 20 }, {"Hard", 40 }
         };
+
+        // Board length and width options
         private readonly Dictionary<string, short> SizeChoices = new() {
             {"Small", 7 }, {"Medium",10 }, {"Large", 12 } 
         };
 
         private readonly Random random = new();
-        private List<Cell> cells;
+        private List<Cell> cells = new();
         
+        // Flag to check if the location of the bombs has been calculated
         private bool bombsPlaced = false;
 
-        public int n = 0;
+        public int n = 0;  // Length and width of board
         public double bombPercentage = 0.0d;
-        public GameBoard()
-        {
-            InitializeComponent();
-            InitializeGame();
-        }
+        public GameBoard() => InitializeComponent();
 
+        public int BombCount { get; private set; }
+
+        // Place the bombs on the board
         private void InitializeBombs(in Cell exludeCell)
-        { 
-            int bombsLeft = (int)Math.Ceiling(n * n * bombPercentage);
-            
+        {
+            int bombsLeft = BombCount;
+
             // Place bombs until enough bombs are placed
             while (bombsLeft > 0)
             {
@@ -65,25 +69,45 @@ namespace BombBrusher
             {
                 for (int col = 0; col < n; col++)
                 {
-                    var cell = new Cell(col, row, cellSize, new System.EventHandler(onClick));
+                    var cell = new Cell(col, row, cellSize, onClick);
                     cells.Add(cell);
                     Controls.Add(cell);
                 }
             }
 
+            BombCount = (int)Math.Ceiling(n * n * bombPercentage);
+
         }
 
-        private void onClick(object sender, EventArgs e)
+        private void InitializeUI()
         {
-            var cell = (Cell)sender;
+            bombCountLabel = new();
+            this.bombCountLabel.Name = "BombCountLabel";
+            this.bombCountLabel.TabIndex = 3;
+            int rightEdgeOfBoard = n * 100;
+            int margin = 50;
+            Size size = new(100, 25);
+            bombCountLabel.Location = new(rightEdgeOfBoard + margin, 150);
+            bombCountLabel.Size = size;
+            
+            bombCountLabel.Show();
+            Controls.Add(bombCountLabel);
+        }
+
+        private void InitializeValues()
+        {
+            DifficultyCbox.SelectedItem = DifficultyCbox.Items[0];
+            sizeCBox.SelectedItem = sizeCBox.Items[0];
+        }
+
+        private void onClick(object? sender, EventArgs e)
+        {
+            if (sender is not Cell cell) { return; }
 
             // Pick bomb locations if this is the first click.
             if (!bombsPlaced) { InitializeBombs(cell); }
             
-            if (cell.IsBomb)
-            { 
-                GameOver();
-            }
+            if (cell.IsBomb) { GameOver(); }
             else
             {
                 // Reveal cell, if none of its neighbors have bombs, reveal them recursively
@@ -92,12 +116,14 @@ namespace BombBrusher
             }
         }
 
+        // Reveal all neighboring cells
         private void Cascade(Cell startingCell)
         {
             HashSet<Cell> visited = new();
             Cascade(startingCell, ref visited);
         }
 
+        // Reveal all neighboring cells if the current cell has no neighboring bombs
         private void Cascade(Cell startingCell, ref HashSet<Cell> visited)
         {
             // Reveal all neighboring cells except the ones that have already been looked at
@@ -125,21 +151,21 @@ namespace BombBrusher
             ToggleMenu(false);
 
             InitializeGame();
+            InitializeUI();
         }
 
         private void ToggleMenu(bool on = false)
         {
             if (on)
             {
-
                 startButton.Show();
                 sizeCBox.Show();
                 DifficultyCbox.Show();
-
             }
             else
             {
                 startButton.Hide();
+                retryButton.Hide();
                 sizeCBox.Hide();
                 DifficultyCbox.Hide();
             }
@@ -152,13 +178,13 @@ namespace BombBrusher
             retryButton.Show();
         }
 
-        private void startButton_Click(object sender, EventArgs e)
+        private void StartButton_Click(object sender, EventArgs e)
         {
             StartGame(SizeChoices[(string)sizeCBox.SelectedItem], 
                 Difficulty[(string)DifficultyCbox.SelectedItem]);
         }
 
-        private void retryButton_Click(object sender, EventArgs e)
+        private void RetryButton_Click(object sender, EventArgs e)
         {
             cells.ForEach(cell => Controls.Remove(cell));
             cells.Clear();

@@ -41,7 +41,6 @@
             this.sizeCBox.Name = "sizeCBox";
             this.sizeCBox.Size = new System.Drawing.Size(276, 33);
             this.sizeCBox.TabIndex = 0;
-
             this.sizeCBox.Items.AddRange(SizeChoices.Keys.ToArray());
                 
             // 
@@ -53,14 +52,14 @@
             this.startButton.TabIndex = 1;
             this.startButton.Text = "Start";
             this.startButton.UseVisualStyleBackColor = true;
-            this.startButton.Click += new System.EventHandler(this.startButton_Click);
+            this.startButton.Click += new System.EventHandler(this.StartButton_Click);
 
             this.retryButton.Location = new System.Drawing.Point(261, 270);
             this.retryButton.Name = "retryButton";
             this.retryButton.Size = new System.Drawing.Size(247, 34);
             this.retryButton.Text = "Retry";
             this.retryButton.UseVisualStyleBackColor = true;
-            this.retryButton.Click += new System.EventHandler(this.retryButton_Click);
+            this.retryButton.Click += new System.EventHandler(this.RetryButton_Click);
             this.retryButton.Hide();
             // 
             // DifficultyCbox
@@ -70,8 +69,8 @@
             this.DifficultyCbox.Name = "DifficultyCbox";
             this.DifficultyCbox.Size = new System.Drawing.Size(294, 33);
             this.DifficultyCbox.TabIndex = 2;
-
             this.DifficultyCbox.Items.AddRange(Difficulty.Keys.ToArray());
+           
             // 
             // GameBoard
             // 
@@ -86,13 +85,18 @@
             this.Text = "GameBoard";
             this.ResumeLayout(false);
 
+            InitializeValues();
+
         }
 
         #endregion
 
-        private ComboBox sizeCBox;
         private Button startButton;
         private Button retryButton;
+
+        private ComboBox sizeCBox;
         private ComboBox DifficultyCbox;
+
+        public Label bombCountLabel;
     }
 }
