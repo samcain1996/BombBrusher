@@ -1,8 +1,8 @@
-bin/*
-obj/*
+bin/
+obj/
+.vs/
+.vscode/
 *.csproj
 *.user
 *.sln
-
-
 *.resx
